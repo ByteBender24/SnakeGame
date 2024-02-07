@@ -10,6 +10,8 @@ WIN_HEIGHT = 800
 WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Snake Game")
 
+BG = pygame.transform.scale(pygame.image.load(
+    r"./assets/bg.jpg"), (WIN_WIDTH, WIN_HEIGHT))
 # COLORS:
 RED = (255, 0, 0)
 WHITE = (255, 255, 255)
@@ -80,16 +82,16 @@ class Snake:
 
         if len(self.blocks) >= 2:
             if self.facing == -1:
-                bodyblock.x = self.blocks[-1].prev_coord[0] + self.size *2
+                bodyblock.x = self.blocks[-1].prev_coord[0] + self.size 
                 bodyblock.y = self.blocks[-1].prev_coord[1]
             if self.facing == -2:
-                bodyblock.y = self.blocks[-1].prev_coord[1] - self.size * 2
+                bodyblock.y = self.blocks[-1].prev_coord[1] - self.size 
                 bodyblock.x = self.blocks[-1].prev_coord[0]
             if self.facing == +1:
-                bodyblock.x = self.blocks[-1].prev_coord[0] - self.size * 2
+                bodyblock.x = self.blocks[-1].prev_coord[0] - self.size
                 bodyblock.y = self.blocks[-1].prev_coord[1]
             if self.facing == +2:
-                bodyblock.y = self.blocks[-1].prev_coord[1] + self.size * 2
+                bodyblock.y = self.blocks[-1].prev_coord[1] + self.size
                 bodyblock.x = self.blocks[-1].prev_coord[0]
         else:
             if self.facing == -1:
@@ -211,7 +213,7 @@ class Food:
 
 
 def draw(blocks, snake, apple):
-    WIN.fill(WHITE)
+    WIN.blit(BG, (0, 0))
     blocks.draw()
     snake.draw()
     if apple is not None:
