@@ -163,11 +163,11 @@ class BodyBlock:
 
 
 class Food:
-    def __init__(self):
+    def __init__(self, x, y):
         self.food = pygame.image.load(r".\assets\apple_alt_64.png")
         # 32 is excluding the width of borders
-        self.x = random.randint(32, WIN_WIDTH-96)
-        self.y = random.randint(32, WIN_HEIGHT-96)
+        self.x = x
+        self.y = y
 
     def draw(self):
         WIN.blit(self.food, (self.x, self.y))
@@ -237,13 +237,16 @@ def movement():
 def random_apple_generator():
     global APPLE
 
+    y = random.randint(32, WIN_HEIGHT-96)
+    x = random.randint(32, WIN_WIDTH-96)
     if APPLE is None:
-        apple = Food()
+        apple = Food(500, 32)
         APPLE = apple
 
 
 def collision_check(block, snake):
     global APPLE
+
     if APPLE.get_hitbox().colliderect(snake.get_hitbox("head")):
         APPLE = None
         snake.add_block()
@@ -259,17 +262,17 @@ def collision_check(block, snake):
         
 FONT = pygame.font.SysFont("comicsans", 30, True)
 CLOCK = pygame.time.Clock()
-APPLE = Food()
+APPLE = Food(500, 32)
 BLOCK = Blocks()
 SNAKE = Snake()
-FPS = 20
+FPS = 10
 
 while True:
-    CLOCK.tick(FPS)
+    ms = CLOCK.tick(FPS)
     handle_events()
     SNAKE.move()
+    movement()
     collision_check(BLOCK, SNAKE)
     draw(BLOCK, SNAKE, APPLE)
-    movement()
     random_apple_generator()
     pygame.display.update()
