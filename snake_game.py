@@ -68,10 +68,11 @@ class Snake:
         self.blocks = [self.headblock]
         self.facing = 1
         self.vel = 32
-        self.x = 32
-        self.y = 32
+        self.x = 64
+        self.y = 64
         self.prev_coord = [self.x, self.y]
         self.size = 32
+        self.visible = True
 
     def add_block(self):
         bodyblock = BodyBlock()
@@ -90,11 +91,12 @@ class Snake:
         self.blocks.append(bodyblock)
 
     def draw(self):
-        WIN.blit(self.headblock, (self.x, self.y))
-        if self.blocks:
-            for num in range(1, len(self.blocks)):
-                block = self.blocks[num]
-                block.draw()
+        if self.visible:
+            WIN.blit(self.headblock, (self.x, self.y))
+            if self.blocks:
+                for num in range(1, len(self.blocks)):
+                    block = self.blocks[num]
+                    block.draw()
 
     def move(self):
         if self.facing == -1:
@@ -122,10 +124,11 @@ class Snake:
     def initialize_original(self):
         self.blocks = [self.headblock]
         self.facing = 1
-        self.x = 32
-        self.y = 32
+        self.x = 64
+        self.y = 64
         self.prev_coord = [self.x, self.y]
         self.size = 32
+        self.visible = True
         
 
 class BodyBlock:
@@ -188,7 +191,7 @@ def draw(blocks, snake, apple):
     walls = blocks.get_walls_boundaries()
     for wall in walls:
         pygame.draw.rect(WIN, (255, 0, 0), wall, 2)
-        
+
     pygame.display.update()
 
 
@@ -259,13 +262,14 @@ CLOCK = pygame.time.Clock()
 APPLE = Food()
 BLOCK = Blocks()
 SNAKE = Snake()
+FPS = 20
 
 while True:
-    CLOCK.tick(20)
+    CLOCK.tick(FPS)
     handle_events()
     SNAKE.move()
-    draw(BLOCK, SNAKE, APPLE)
     collision_check(BLOCK, SNAKE)
+    draw(BLOCK, SNAKE, APPLE)
     movement()
     random_apple_generator()
     pygame.display.update()
