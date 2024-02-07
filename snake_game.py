@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 
 pygame.init()
 
@@ -63,24 +64,41 @@ class Snake:
         self.vel = 4
         self.x = 32
         self.y = 32
+        self.size = 32
 
     def add_block(self):
         bodyblock = BodyBlock()
         if self.facing == -1:
-            bodyblock.x = self.x + 32
+            bodyblock.x = self.x + self.size
         if self.facing == -2:
-            bodyblock.y = self.y - 32
+            bodyblock.y = self.y - self.size
         if self.facing == +1:
-            bodyblock.x = self.x - 32
+            bodyblock.x = self.x - self.size
         if self.facing == +2:
-            bodyblock.y = self.y + 32
+            bodyblock.y = self.y + self.size
         self.blocks.append(bodyblock)
 
     def draw(self):
         WIN.blit(self.headblock, (self.x, self.y))
+        if self.blocks:
+            for num in range(1, len(self.blocks)):
+                block = self.blocks[num]
+                WIN.blit(block.block, (block.x, block.y))
 
-    # def move(self):
-    #     self.
+    def move(self):
+        if self.facing == -1:
+            self.x = self.x - self.vel
+        if self.facing == -2:
+            self.y = self.y + self.vel
+        if self.facing == +1:
+            self.x = self.x + self.vel
+        if self.facing == +2:
+            self.y = self.y - self.vel
+
+    def get_hitbox(self, part = "head"):
+        '''To check collisions and stuff (returns the draw rectangle around sprites)'''
+        if part == "head":
+            return pygame.Rect(self.x, self.y, 64, 64)
 
 
 class BodyBlock:
@@ -90,11 +108,34 @@ class BodyBlock:
         self.y = 32
         self.facing = 1
 
+    def get_hitbox(self):
+        '''To check collisions and stuff (returns the draw rectangle around sprites)'''
+        return pygame.Rect(self.x + 17, self.y + 11, 29, 52)
 
-def draw(blocks, snake):
+
+class Food:
+    def __init__(self):
+        self.food = pygame.image.load(r".\assets\apple_alt_64.png")
+        # 32 is excluding the width of borders
+        self.x = random.randint(32, WIN_WIDTH-96)
+        self.y = random.randint(32, WIN_HEIGHT-96)
+
+    def draw(self):
+        WIN.blit(self.food, (self.x, self.y))
+
+    def get_hitbox(self):
+        '''To check collisions and stuff (returns the draw rectangle around sprites)'''
+        return pygame.Rect(self.x, self.y+8, 64, 56)
+
+
+def draw(blocks, snake, apple):
     WIN.fill(WHITE)
     blocks.draw()
     snake.draw()
+    if apple is not None:
+        apple.draw()
+        pygame.draw.rect(WIN, (255, 0, 0), apple.get_hitbox(), 2)
+    pygame.draw.rect(WIN, (255, 0, 0), snake.get_hitbox(), 2)
     pygame.display.update()
 
 
@@ -112,29 +153,74 @@ def handle_events():
 def movement():
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+    if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and SNAKE.facing != 1:
         SNAKE.facing = -1
-        SNAKE.x -= SNAKE.vel
-    elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+
+    elif (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and SNAKE.facing != -1:
         SNAKE.facing = +1
-        SNAKE.x += SNAKE.vel
-    elif keys[pygame.K_UP] or keys[pygame.K_w]:
+
+    elif (keys[pygame.K_UP] or keys[pygame.K_w]) and SNAKE.facing != -2:
         SNAKE.facing = +2
-        SNAKE.y -= SNAKE.vel
-    elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+
+    elif (keys[pygame.K_DOWN] or keys[pygame.K_s]) and SNAKE.facing != 2:
         SNAKE.facing = -2
-        SNAKE.y += SNAKE.vel
 
-    # Update body blocks' positions
-    for i in range(1, len(SNAKE.blocks)):
-        SNAKE.blocks[i].x = SNAKE.blocks[i-1].x
-        SNAKE.blocks[i].y = SNAKE.blocks[i-1].y
+    for i in range(1,len(SNAKE.blocks)):
+        if isinstance(SNAKE.blocks[i-1], pygame.surface.Surface):
+            x = SNAKE.x
+            y = SNAKE.y
+            if SNAKE.facing == -1:
+                SNAKE.blocks[i].x = x + SNAKE.size
+                SNAKE.blocks[i].y = y
+            elif SNAKE.facing == -2:
+                SNAKE.blocks[i].x = x
+                SNAKE.blocks[i].y = y - SNAKE.size
+            elif SNAKE.facing == +1:
+                SNAKE.blocks[i].x = x - SNAKE.size
+                SNAKE.blocks[i].y = y
+            elif SNAKE.facing == +2:
+                SNAKE.blocks[i].x = x
+                SNAKE.blocks[i].y = y + SNAKE.size
+        else:
+            if SNAKE.facing == -1:
+                SNAKE.blocks[i].x = SNAKE.blocks[i-1].x + SNAKE.size
+                SNAKE.blocks[i].y = SNAKE.blocks[i-1].y
+            elif SNAKE.facing == -2:
+                SNAKE.blocks[i].x = SNAKE.blocks[i-1].x
+                SNAKE.blocks[i].y = SNAKE.blocks[i-1].y - SNAKE.size
+            elif SNAKE.facing == +1:
+                SNAKE.blocks[i].x = SNAKE.blocks[i-1].x - SNAKE.size
+                SNAKE.blocks[i].y = SNAKE.blocks[i-1].y
+            elif SNAKE.facing == +2:
+                SNAKE.blocks[i].x = SNAKE.blocks[i-1].x
+                SNAKE.blocks[i].y = SNAKE.blocks[i-1].y + SNAKE.size
 
+
+def random_apple_generator():
+    global APPLE
+
+    if APPLE is None:
+        apple = Food()
+        APPLE = apple
+
+
+def collision_check(block, snake):
+    global APPLE
+    if APPLE.get_hitbox().colliderect(snake.get_hitbox("head")):
+        APPLE = None
+        snake.add_block()
+
+CLOCK = pygame.time.Clock()
+APPLE = Food()
 BLOCK = Blocks()
 SNAKE = Snake()
 
 while True:
+    CLOCK.tick(60)
     handle_events()
-    draw(BLOCK, SNAKE)
+    draw(BLOCK, SNAKE, APPLE)
+    collision_check(BLOCK, SNAKE)
     movement()
+    SNAKE.move()
+    random_apple_generator()
     pygame.display.update()
