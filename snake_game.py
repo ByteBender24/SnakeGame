@@ -46,7 +46,13 @@ class Blocks:
             y -= 32
         # print("DRAWN LEFT BLOCKS---\n")
 
-
+    def get_walls_boundaries(self):
+        left_wall = pygame.Rect(0,0,32,WIN_HEIGHT)
+        right_wall = pygame.Rect(WIN_WIDTH-32,0,32,WIN_HEIGHT)
+        up_wall = pygame.Rect(0,0,WIN_WIDTH,32)
+        down_wall = pygame.Rect(0, WIN_HEIGHT-32, WIN_WIDTH, 32)
+        return (left_wall, right_wall,up_wall, down_wall)
+    
 class Snake:
     '''
     blocks : list of blocks of snake
@@ -103,18 +109,31 @@ class Snake:
         if self.facing == +2:
             self.prev_coord[1] = self.y
             self.y = self.y - self.vel
+        if self.blocks:
+            for num in range(1, len(self.blocks)):
+                block = self.blocks[num]
+                block.move()
 
     def get_hitbox(self, part="head"):
         '''To check collisions and stuff (returns the draw rectangle around sprites)'''
         if part == "head":
             return pygame.Rect(self.x, self.y, 64, 64)
 
+    def initialize_original(self):
+        self.blocks = [self.headblock]
+        self.facing = 1
+        self.x = 32
+        self.y = 32
+        self.prev_coord = [self.x, self.y]
+        self.size = 32
+        
 
 class BodyBlock:
     def __init__(self):
         self.block = pygame.image.load(r".\assets\snakebody.png")
         self.x = 32
         self.y = 32
+        self.vel = 32
         self.prev_coord = [self.x, self.y]
         self.facing = 1
 
@@ -161,8 +180,15 @@ def draw(blocks, snake, apple):
     snake.draw()
     if apple is not None:
         apple.draw()
+
+    #the below is to draw hitboxes
+    if apple is not None:
         pygame.draw.rect(WIN, (255, 0, 0), apple.get_hitbox(), 2)
     pygame.draw.rect(WIN, (255, 0, 0), snake.get_hitbox(), 2)
+    walls = blocks.get_walls_boundaries()
+    for wall in walls:
+        pygame.draw.rect(WIN, (255, 0, 0), wall, 2)
+        
     pygame.display.update()
 
 
@@ -219,14 +245,23 @@ def collision_check(block, snake):
         APPLE = None
         snake.add_block()
 
+    if any([wall.colliderect(snake.get_hitbox("head")) for wall in block.get_walls_boundaries()]):
+        text = FONT.render("You lost!", True, (255, 0, 0))
+        text_rect = text.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2))
+        WIN.blit(text, text_rect)
+        pygame.display.update()
+        pygame.time.delay(1000)
 
+        snake.initialize_original()
+        
+FONT = pygame.font.SysFont("comicsans", 30, True)
 CLOCK = pygame.time.Clock()
 APPLE = Food()
 BLOCK = Blocks()
 SNAKE = Snake()
 
 while True:
-    CLOCK.tick(5)
+    CLOCK.tick(20)
     handle_events()
     SNAKE.move()
     draw(BLOCK, SNAKE, APPLE)
