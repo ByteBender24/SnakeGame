@@ -73,21 +73,38 @@ class Snake:
         self.prev_coord = [self.x, self.y]
         self.size = 32
         self.visible = True
+        self.prev_facing = self.facing
 
     def add_block(self):
         bodyblock = BodyBlock()
-        if self.facing == -1:
-            bodyblock.x = self.x + self.size
-            bodyblock.y = self.y
-        if self.facing == -2:
-            bodyblock.y = self.y - self.size
-            bodyblock.x = self.x
-        if self.facing == +1:
-            bodyblock.x = self.x - self.size
-            bodyblock.y = self.y
-        if self.facing == +2:
-            bodyblock.y = self.y + self.size
-            bodyblock.x = self.x
+
+        if len(self.blocks) >= 2:
+            if self.facing == -1:
+                bodyblock.x = self.blocks[-1].prev_coord[0] + self.size *2
+                bodyblock.y = self.blocks[-1].prev_coord[1]
+            if self.facing == -2:
+                bodyblock.y = self.blocks[-1].prev_coord[1] - self.size * 2
+                bodyblock.x = self.blocks[-1].prev_coord[0]
+            if self.facing == +1:
+                bodyblock.x = self.blocks[-1].prev_coord[0] - self.size * 2
+                bodyblock.y = self.blocks[-1].prev_coord[1]
+            if self.facing == +2:
+                bodyblock.y = self.blocks[-1].prev_coord[1] + self.size * 2
+                bodyblock.x = self.blocks[-1].prev_coord[0]
+        else:
+            if self.facing == -1:
+                bodyblock.x = self.x + self.size
+                bodyblock.y = self.y
+            if self.facing == -2:
+                bodyblock.y = self.y - self.size
+                bodyblock.x = self.x
+            if self.facing == +1:
+                bodyblock.x = self.x - self.size
+                bodyblock.y = self.y
+            if self.facing == +2:
+                bodyblock.y = self.y + self.size
+                bodyblock.x = self.x
+
         self.blocks.append(bodyblock)
 
     def draw(self):
@@ -101,14 +118,18 @@ class Snake:
     def move(self):
         if self.facing == -1:
             self.prev_coord[0] = self.x
+            self.prev_coord[1] = self.y
             self.x = self.x - self.vel
         if self.facing == -2:
+            self.prev_coord[0] = self.x
             self.prev_coord[1] = self.y
             self.y = self.y + self.vel
         if self.facing == +1:
             self.prev_coord[0] = self.x
+            self.prev_coord[1] = self.y
             self.x = self.x + self.vel
         if self.facing == +2:
+            self.prev_coord[0] = self.x
             self.prev_coord[1] = self.y
             self.y = self.y - self.vel
         if self.blocks:
@@ -129,7 +150,11 @@ class Snake:
         self.prev_coord = [self.x, self.y]
         self.size = 32
         self.visible = True
-        
+    
+    def __str__(self) -> str:
+        blocks = [str(x) for x in self.blocks]
+        blocks = ",".join(blocks)
+        return f"{blocks}"
 
 class BodyBlock:
     def __init__(self):
@@ -139,6 +164,8 @@ class BodyBlock:
         self.vel = 32
         self.prev_coord = [self.x, self.y]
         self.facing = 1
+        self.prev_facing = self.facing
+
 
     def get_hitbox(self):
         '''To check collisions and stuff (returns the draw rectangle around sprites)'''
@@ -150,17 +177,23 @@ class BodyBlock:
     def move(self):
         if self.facing == -1:
             self.prev_coord[0] = self.x
+            self.prev_coord[1] = self.y
             self.x = self.x - self.vel
         if self.facing == -2:
+            self.prev_coord[0] = self.x
             self.prev_coord[1] = self.y
             self.y = self.y + self.vel
         if self.facing == +1:
             self.prev_coord[0] = self.x
+            self.prev_coord[1] = self.y
             self.x = self.x + self.vel
         if self.facing == +2:
+            self.prev_coord[0] = self.x
             self.prev_coord[1] = self.y
             self.y = self.y - self.vel
 
+    def __str__(self) -> str:
+        return f"B//({self.x}, {self.y}), {self.prev_coord}, {self.facing}//"
 
 class Food:
     def __init__(self, x, y):
@@ -240,7 +273,7 @@ def random_apple_generator():
     y = random.randint(32, WIN_HEIGHT-96)
     x = random.randint(32, WIN_WIDTH-96)
     if APPLE is None:
-        apple = Food(500, 32)
+        apple = Food(x,y)
         APPLE = apple
 
 
@@ -262,14 +295,15 @@ def collision_check(block, snake):
         
 FONT = pygame.font.SysFont("comicsans", 30, True)
 CLOCK = pygame.time.Clock()
-APPLE = Food(500, 32)
+APPLE = Food(500,32)
 BLOCK = Blocks()
 SNAKE = Snake()
 FPS = 10
 
 while True:
-    ms = CLOCK.tick(FPS)
+    ms = CLOCK.tick(32)
     handle_events()
+    print(SNAKE)
     SNAKE.move()
     movement()
     collision_check(BLOCK, SNAKE)
