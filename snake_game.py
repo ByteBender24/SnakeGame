@@ -61,21 +61,26 @@ class Snake:
         self.headblock = pygame.image.load(r".\assets\snake_green_head_64.png")
         self.blocks = [self.headblock]
         self.facing = 1
-        self.vel = 4
+        self.vel = 32
         self.x = 32
         self.y = 32
+        self.prev_coord = [self.x, self.y]
         self.size = 32
 
     def add_block(self):
         bodyblock = BodyBlock()
         if self.facing == -1:
             bodyblock.x = self.x + self.size
+            bodyblock.y = self.y
         if self.facing == -2:
             bodyblock.y = self.y - self.size
+            bodyblock.x = self.x
         if self.facing == +1:
             bodyblock.x = self.x - self.size
+            bodyblock.y = self.y
         if self.facing == +2:
             bodyblock.y = self.y + self.size
+            bodyblock.x = self.x
         self.blocks.append(bodyblock)
 
     def draw(self):
@@ -83,19 +88,23 @@ class Snake:
         if self.blocks:
             for num in range(1, len(self.blocks)):
                 block = self.blocks[num]
-                WIN.blit(block.block, (block.x, block.y))
+                block.draw()
 
     def move(self):
         if self.facing == -1:
+            self.prev_coord[0] = self.x
             self.x = self.x - self.vel
         if self.facing == -2:
+            self.prev_coord[1] = self.y
             self.y = self.y + self.vel
         if self.facing == +1:
+            self.prev_coord[0] = self.x
             self.x = self.x + self.vel
         if self.facing == +2:
+            self.prev_coord[1] = self.y
             self.y = self.y - self.vel
 
-    def get_hitbox(self, part = "head"):
+    def get_hitbox(self, part="head"):
         '''To check collisions and stuff (returns the draw rectangle around sprites)'''
         if part == "head":
             return pygame.Rect(self.x, self.y, 64, 64)
@@ -106,11 +115,29 @@ class BodyBlock:
         self.block = pygame.image.load(r".\assets\snakebody.png")
         self.x = 32
         self.y = 32
+        self.prev_coord = [self.x, self.y]
         self.facing = 1
 
     def get_hitbox(self):
         '''To check collisions and stuff (returns the draw rectangle around sprites)'''
         return pygame.Rect(self.x + 17, self.y + 11, 29, 52)
+
+    def draw(self):
+        WIN.blit(self.block, (self.x, self.y))
+
+    def move(self):
+        if self.facing == -1:
+            self.prev_coord[0] = self.x
+            self.x = self.x - self.vel
+        if self.facing == -2:
+            self.prev_coord[1] = self.y
+            self.y = self.y + self.vel
+        if self.facing == +1:
+            self.prev_coord[0] = self.x
+            self.x = self.x + self.vel
+        if self.facing == +2:
+            self.prev_coord[1] = self.y
+            self.y = self.y - self.vel
 
 
 class Food:
@@ -165,35 +192,17 @@ def movement():
     elif (keys[pygame.K_DOWN] or keys[pygame.K_s]) and SNAKE.facing != 2:
         SNAKE.facing = -2
 
-    for i in range(1,len(SNAKE.blocks)):
+    for i in range(1, len(SNAKE.blocks)):
         if isinstance(SNAKE.blocks[i-1], pygame.surface.Surface):
-            x = SNAKE.x
-            y = SNAKE.y
-            if SNAKE.facing == -1:
-                SNAKE.blocks[i].x = x + SNAKE.size
-                SNAKE.blocks[i].y = y
-            elif SNAKE.facing == -2:
-                SNAKE.blocks[i].x = x
-                SNAKE.blocks[i].y = y - SNAKE.size
-            elif SNAKE.facing == +1:
-                SNAKE.blocks[i].x = x - SNAKE.size
-                SNAKE.blocks[i].y = y
-            elif SNAKE.facing == +2:
-                SNAKE.blocks[i].x = x
-                SNAKE.blocks[i].y = y + SNAKE.size
+            x = SNAKE.prev_coord[0]
+            y = SNAKE.prev_coord[1]
+            SNAKE.blocks[i].x = x
+            SNAKE.blocks[i].y = y
+            SNAKE.blocks[i].facing = SNAKE.facing
         else:
-            if SNAKE.facing == -1:
-                SNAKE.blocks[i].x = SNAKE.blocks[i-1].x + SNAKE.size
-                SNAKE.blocks[i].y = SNAKE.blocks[i-1].y
-            elif SNAKE.facing == -2:
-                SNAKE.blocks[i].x = SNAKE.blocks[i-1].x
-                SNAKE.blocks[i].y = SNAKE.blocks[i-1].y - SNAKE.size
-            elif SNAKE.facing == +1:
-                SNAKE.blocks[i].x = SNAKE.blocks[i-1].x - SNAKE.size
-                SNAKE.blocks[i].y = SNAKE.blocks[i-1].y
-            elif SNAKE.facing == +2:
-                SNAKE.blocks[i].x = SNAKE.blocks[i-1].x
-                SNAKE.blocks[i].y = SNAKE.blocks[i-1].y + SNAKE.size
+            SNAKE.blocks[i].x = SNAKE.blocks[i-1].prev_coord[0]
+            SNAKE.blocks[i].y = SNAKE.blocks[i-1].prev_coord[1]
+            SNAKE.blocks[i].facing = SNAKE.blocks[i-1].facing
 
 
 def random_apple_generator():
@@ -210,17 +219,18 @@ def collision_check(block, snake):
         APPLE = None
         snake.add_block()
 
+
 CLOCK = pygame.time.Clock()
 APPLE = Food()
 BLOCK = Blocks()
 SNAKE = Snake()
 
 while True:
-    CLOCK.tick(60)
+    CLOCK.tick(5)
     handle_events()
+    SNAKE.move()
     draw(BLOCK, SNAKE, APPLE)
     collision_check(BLOCK, SNAKE)
     movement()
-    SNAKE.move()
     random_apple_generator()
     pygame.display.update()
