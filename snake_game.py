@@ -178,7 +178,7 @@ class BodyBlock:
 
     def get_hitbox(self):
         '''To check collisions and stuff (returns the draw rectangle around sprites)'''
-        return pygame.Rect(self.x + 17, self.y + 11, 29, 52)
+        return pygame.Rect(self.x, self.y,64, 64)
 
     def draw(self):
         WIN.blit(self.block, (self.x, self.y))
@@ -217,7 +217,7 @@ class Food:
 
     def get_hitbox(self):
         '''To check collisions and stuff (returns the draw rectangle around sprites)'''
-        return pygame.Rect(self.x, self.y+8, 64, 56)
+        return pygame.Rect(self.x , self.y+8, 64, 56)
 
 
 def draw(blocks, snake, apple):
@@ -307,7 +307,6 @@ def collision_check(block, snake):
         pygame.time.delay(1000)
         SCORE = 0
         snake.initialize_original()
-
 
 FONT = pygame.font.SysFont("comicsans", 30, True)
 CLOCK = pygame.time.Clock()
